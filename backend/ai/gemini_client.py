@@ -1,3 +1,5 @@
+
+import base64
 import os
 from pathlib import Path
 from typing import Optional
@@ -17,9 +19,13 @@ def get_gemini_client() -> genai.Client:
     api_key = os.getenv("GEMINI_API_KEY")
 
     if not api_key or not api_key.strip():
-        raise ValueError("GEMINI_API_KEY environment variable is missing")
+        raise ValueError(
+            "GEMINI_API_KEY environment variable is missing"
+        )
 
-    return genai.Client(api_key=api_key.strip())
+    return genai.Client(
+        api_key=api_key.strip()
+    )
 
 
 def generate_structured_content(
@@ -41,7 +47,17 @@ def generate_structured_content(
     if client is None:
         client = get_gemini_client()
 
+    # ---------------------------------------------------------
+    # MULTIMODAL INPUT
+    # ---------------------------------------------------------
     if image_bytes and mime_type:
+
+        # Gemini Interactions API expects inline image data
+        # as a Base64-encoded UTF-8 string, not raw bytes.
+        image_base64 = base64.b64encode(
+            image_bytes
+        ).decode("utf-8")
+
         input_content = [
             {
                 "type": "text",
@@ -49,19 +65,29 @@ def generate_structured_content(
             },
             {
                 "type": "image",
-                "data": image_bytes,
+                "data": image_base64,
                 "mime_type": mime_type
             }
         ]
+
+    # ---------------------------------------------------------
+    # TEXT INPUT
+    # ---------------------------------------------------------
     else:
         input_content = prompt_text
 
+    # ---------------------------------------------------------
+    # GEMINI INTERACTION
+    # ---------------------------------------------------------
     interaction = client.interactions.create(
         model="gemini-3.6-flash",
         input=input_content
     )
 
     if not interaction or not interaction.output_text:
-        raise ValueError("Empty response received from Gemini API")
+        raise ValueError(
+            "Empty response received from Gemini API"
+        )
 
     return interaction.output_text
+
