@@ -1,11 +1,12 @@
 """
 Document Intelligence & Action Extractor
-Backend — Milestone 2: Database & Authentication
+Backend — Milestone 3: Document Upload & Storage
 """
 
 from fastapi import FastAPI
 from backend.database.database import engine, Base
 from backend.api.auth import router as auth_router
+from backend.api.documents import router as documents_router
 
 # Create database tables automatically if they do not exist
 try:
@@ -17,11 +18,12 @@ except Exception as e:
 app = FastAPI(
     title="Document Intelligence & Action Extractor",
     description="Backend API for the Document Intelligence & Action Extractor mobile application.",
-    version="0.2.0",
+    version="0.3.0",
 )
 
 # Register routers
 app.include_router(auth_router)
+app.include_router(documents_router)
 
 
 @app.get("/health")
