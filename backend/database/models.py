@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.orm import relationship
 from backend.database.database import Base
 
@@ -36,3 +36,20 @@ class Document(Base):
     uploaded_at = Column(DateTime, nullable=False, default=datetime.utcnow, server_default=func.now())
 
     owner = relationship("User", back_populates="documents")
+    pages = relationship("DocumentPage", back_populates="document", cascade="all, delete-orphan")
+
+
+class DocumentPage(Base):
+    """
+    DocumentPage model storing page-level text extraction and scanned status.
+    """
+    __tablename__ = "document_pages"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    page_number = Column(Integer, nullable=False)
+    content = Column(Text, nullable=True)
+    is_scanned = Column(Boolean, nullable=False, default=False)
+
+    document = relationship("Document", back_populates="pages")
+
