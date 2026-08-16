@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Text, Boolean, Float, DateTime, ForeignKey, JSON, func
 from sqlalchemy.orm import relationship
 from backend.database.database import Base
 
@@ -35,8 +35,16 @@ class Document(Base):
     processing_status = Column(String, nullable=False, default="pending")
     uploaded_at = Column(DateTime, nullable=False, default=datetime.utcnow, server_default=func.now())
 
+    # M5 AI Analysis summary & extractions
+    summary = Column(Text, nullable=True)
+    required_documents = Column(JSON, nullable=True)
+    people = Column(JSON, nullable=True)
+
     owner = relationship("User", back_populates="documents")
     pages = relationship("DocumentPage", back_populates="document", cascade="all, delete-orphan")
+    actions = relationship("Action", back_populates="document", cascade="all, delete-orphan")
+    fees = relationship("Fee", back_populates="document", cascade="all, delete-orphan")
+    risks = relationship("Risk", back_populates="document", cascade="all, delete-orphan")
 
 
 class DocumentPage(Base):
@@ -52,4 +60,57 @@ class DocumentPage(Base):
     is_scanned = Column(Boolean, nullable=False, default=False)
 
     document = relationship("Document", back_populates="pages")
+
+
+class Action(Base):
+    """
+    Action model representing extracted action items from AI analysis.
+    """
+    __tablename__ = "actions"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    description = Column(Text, nullable=False)
+    deadline = Column(String, nullable=True)
+    deadline_type = Column(String, nullable=True)
+    priority = Column(String, nullable=False)
+    confidence = Column(Float, nullable=False)
+    source_page = Column(Integer, nullable=True)
+
+    document = relationship("Document", back_populates="actions")
+
+
+class Fee(Base):
+    """
+    Fee model representing extracted fee requirements from AI analysis.
+    """
+    __tablename__ = "fees"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    amount = Column(Float, nullable=False)
+    currency = Column(String, nullable=False)
+    purpose = Column(Text, nullable=False)
+    confidence = Column(Float, nullable=False)
+    source_page = Column(Integer, nullable=True)
+
+    document = relationship("Document", back_populates="fees")
+
+
+class Risk(Base):
+    """
+    Risk model representing extracted risks and penalties from AI analysis.
+    """
+    __tablename__ = "risks"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=False, index=True)
+    description = Column(Text, nullable=False)
+    severity = Column(String, nullable=False)
+    confidence = Column(Float, nullable=False)
+    source_page = Column(Integer, nullable=True)
+
+    document = relationship("Document", back_populates="risks")
+
 
