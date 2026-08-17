@@ -20,6 +20,15 @@ class User(Base):
     String,
     nullable=True
 )
+    notification_preferences = Column(
+    JSON,
+    nullable=True,
+    default=lambda: {
+        "upcoming_deadlines": True,
+        "overdue_tasks": True,
+        "processing_complete": True
+    }
+)
 
     documents = relationship("Document", back_populates="owner", cascade="all, delete-orphan")
     tasks = relationship(

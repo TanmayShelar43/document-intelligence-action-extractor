@@ -72,6 +72,11 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
 
+class NotificationPreferencesRequest(BaseModel):
+    upcoming_deadlines: bool = True
+    overdue_tasks: bool = True
+    processing_complete: bool = True
+
 
 # Authentication Dependency for Protected Routes
 def get_current_user(
@@ -176,6 +181,30 @@ def get_me(current_user: User = Depends(get_current_user)):
     """
     return current_user
 
+@router.patch("/preferences")
+def update_preferences(
+    request: NotificationPreferencesRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Update notification preferences for the authenticated user.
+    """
+
+    current_user.notification_preferences = {
+        "upcoming_deadlines": request.upcoming_deadlines,
+        "overdue_tasks": request.overdue_tasks,
+        "processing_complete": request.processing_complete
+    }
+
+    db.commit()
+    db.refresh(current_user)
+
+    return {
+        "message": "Notification preferences updated successfully",
+        "preferences": current_user.notification_preferences
+    }
+
 @router.post("/fcm-token")
 def register_fcm_token(
     request: FCMTokenRequest,
@@ -202,3 +231,4 @@ def register_fcm_token(
     return {
         "message": "FCM token registered successfully"
     }
+
