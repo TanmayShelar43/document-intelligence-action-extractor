@@ -64,7 +64,9 @@ class UserResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
-
+    
+class FCMTokenRequest(BaseModel):
+    fcm_token: str
 
 class TokenResponse(BaseModel):
     access_token: str
@@ -173,3 +175,30 @@ def get_me(current_user: User = Depends(get_current_user)):
     Never exposes password_hash.
     """
     return current_user
+
+@router.post("/fcm-token")
+def register_fcm_token(
+    request: FCMTokenRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Register or update the FCM token for the authenticated user.
+    """
+
+    token = request.fcm_token.strip()
+
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="FCM token must not be empty"
+        )
+
+    current_user.fcm_token = token
+
+    db.commit()
+    db.refresh(current_user)
+
+    return {
+        "message": "FCM token registered successfully"
+    }

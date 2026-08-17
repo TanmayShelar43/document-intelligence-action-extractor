@@ -16,6 +16,10 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, server_default=func.now())
+    fcm_token = Column(
+    String,
+    nullable=True
+)
 
     documents = relationship("Document", back_populates="owner", cascade="all, delete-orphan")
     tasks = relationship(
@@ -196,3 +200,28 @@ class Task(Base):
         "Action",
         back_populates="tasks"
     )
+    reminders = relationship(
+        "Reminder",
+        back_populates="task",
+        cascade="all, delete-orphan"
+    )
+
+
+class Reminder(Base):
+    """
+    Reminder model representing persisted reminders for tasks.
+    Actual notification sending belongs to M9.
+    """
+    __tablename__ = "reminders"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    task_id = Column(
+        Integer,
+        ForeignKey("tasks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    reminder_time = Column(DateTime, nullable=False)
+    status = Column(String, nullable=False, default="pending")
+
+    task = relationship("Task", back_populates="reminders")
