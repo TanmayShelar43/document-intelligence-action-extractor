@@ -8,6 +8,7 @@ from backend.database.database import engine, Base
 from backend.api.auth import router as auth_router
 from backend.api.documents import router as documents_router
 from backend.api.analysis import router as analysis_router
+from backend.api.tasks import router as tasks_router
 
 # Create database tables automatically if they do not exist
 try:
@@ -26,6 +27,9 @@ app = FastAPI(
 app.include_router(auth_router)
 app.include_router(documents_router)
 app.include_router(analysis_router)
+
+app.include_router(tasks_router)
+
 
 
 

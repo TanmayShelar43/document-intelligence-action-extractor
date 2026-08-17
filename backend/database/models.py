@@ -18,6 +18,11 @@ class User(Base):
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow, server_default=func.now())
 
     documents = relationship("Document", back_populates="owner", cascade="all, delete-orphan")
+    tasks = relationship(
+    "Task",
+    back_populates="user",
+    cascade="all, delete-orphan"
+)
 
 
 class Document(Base):
@@ -79,6 +84,10 @@ class Action(Base):
     source_page = Column(Integer, nullable=True)
 
     document = relationship("Document", back_populates="actions")
+    tasks = relationship(
+    "Task",
+    back_populates="action"
+)
 
 
 class Fee(Base):
@@ -114,3 +123,76 @@ class Risk(Base):
     document = relationship("Document", back_populates="risks")
 
 
+class Task(Base):
+    """
+    Task model representing manual or extracted user tasks.
+
+    action_id is nullable:
+    - NULL -> manually created task
+    - value -> task created from an extracted Action
+    """
+    __tablename__ = "tasks"
+
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+        autoincrement=True
+    )
+
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    action_id = Column(
+        Integer,
+        ForeignKey("actions.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True
+    )
+
+    title = Column(
+        String,
+        nullable=False
+    )
+
+    description = Column(
+        Text,
+        nullable=True
+    )
+
+    deadline = Column(
+        String,
+        nullable=True
+    )
+
+    priority = Column(
+        String,
+        nullable=False
+    )
+
+    status = Column(
+        String,
+        nullable=False,
+        default="pending"
+    )
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+        server_default=func.now()
+    )
+
+    user = relationship(
+        "User",
+        back_populates="tasks"
+    )
+
+    action = relationship(
+        "Action",
+        back_populates="tasks"
+    )
